@@ -1,10 +1,11 @@
 {
     "name": "amidesfahani/farsi-helper",
-    "description": "Helper Class for Laravel",
+    "description": "Persian Helper Class for PHP & Laravel",
+    "keywords": ["farsi", "persian", "php", "laravel"],
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Amid\\Helpers\\FarsiHelper\\": "src/"
+            "AmidEsfahani\\Helpers\\": "src/"
         }
     },
     "authors": [
@@ -14,6 +15,7 @@
         }
     ],
     "require": {
-        "php": ">=5.3.0"
+        "php": "^7.0|^7.1|^7.2|^8.0|^8.1",
+        "morilog/jalali": "^3.4"
     }
 }

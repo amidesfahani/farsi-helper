@@ -1,9 +1,12 @@
 <?php
 
-namespace Amid\Helpers;
+namespace AmidEsfahani\Helpers;
 
 class HumanReadable
 {
+    /**
+     * $translate requires Laravel
+     */
     public static function FileSize($bytes, $translate = false, $round = 0)
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
@@ -16,5 +19,13 @@ class HumanReadable
     public static function roundDown($n, $increment)
     {
         return floor($n / $increment) * $increment;
+    }
+}
+
+if (!function_exists('__'))
+{
+    function __($phrase)
+    {
+        return $phrase;
     }
 }

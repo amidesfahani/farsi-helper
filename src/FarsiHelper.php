@@ -1,66 +1,25 @@
 <?php
 
-namespace Amid\Helpers;
+namespace AmidEsfahani\Helpers;
 
 class FarsiHelper
 {
-    public static function isValidBarcode($barcode)
-    {
-        //checks validity of: GTIN-8, GTIN-12, GTIN-13, GTIN-14, GSIN, SSCC
-        //see: http://www.gs1.org/how-calculate-check-digit-manually
-        $barcode = (string) $barcode;
-        //we accept only digits
-        if (!preg_match("/^[0-9]+$/", $barcode)) {
-            return false;
-        }
-        //check valid lengths:
-        $l = strlen($barcode);
-        if (!in_array($l, [8,12,13,14,17,18]))
-            return false;
-        //get check digit
-        $check = substr($barcode, -1);
-        $barcode = substr($barcode, 0, -1);
-        $sum_even = $sum_odd = 0;
-        $even = true;
-        while(strlen($barcode)>0) {
-            $digit = substr($barcode, -1);
-            if ($even)
-                $sum_even += 3 * $digit;
-            else 
-                $sum_odd += $digit;
-            $even = !$even;
-            $barcode = substr($barcode, 0, -1);
-        }
-        $sum = $sum_even + $sum_odd;
-        $sum_rounded_up = ceil($sum/10) * 10;
-        return ($check == ($sum_rounded_up - $sum));
-    }
-
-    public static function isPersianAlpha($input)
+    public static function isPersianAlpha($input): bool
     {
         return (bool) preg_match("/^[\x{600}-\x{6FF}\x{200c}\x{064b}\x{064d}\x{064c}\x{064e}\x{064f}\x{0650}\x{0651}\s]+$/u", $input);
     }
 
-    public static function isPersianNum($input)
+    public static function isPersianNum($input): bool
     {
         return (bool) preg_match('/^[\x{6F0}-\x{6F9}]+$/u', $input);
     }
 
-    public static function isPersianAlphaNum($input)
+    public static function isPersianAlphaNum($input): bool
     {
         return (bool) preg_match('/^[\x{600}-\x{6FF}\x{200c}\x{064b}\x{064d}\x{064c}\x{064e}\x{064f}\x{0650}\x{0651}\s]+$/u', $input);
     }
 
-    public static function validateColor($input)
-    {
-        return preg_match(
-            '/^(#(?:[0-9a-f]{2}){2,4}|#[0-9a-f]{3}|(?:rgba?|hsla?)\((?:\d+%?(?:deg|rad|grad|turn)?(?:,|\s)+){2,3}[\s\/]*[\d\.]+%?\))$/',
-            $input,
-            $matches
-        ) || preg_match('/#([a-f0-9]{3}){1,2}\b/i', $input, $matches);
-    }
-
-    public static function isMelliCode($string)
+    public static function isMelliCode($string): bool
     {
         if(!preg_match('/^[0-9]{10}$/',$string))
             return false;
@@ -76,97 +35,7 @@ class FarsiHelper
         return false;
     }
 
-    public static function isCardNumber($value)
-    {
-        preg_match('/^([1-9]{1})([0-9]{15})$/', $value, $matches, PREG_OFFSET_CAPTURE, 0);
-        return boolval(count($matches));
-    }
-
-    public static function GenerateCard($type = 'Mastercard')
-    {
-        $pos = 0;
-		$str = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-		$sum = 0;
-		$final_digit = 0;
-		$t = 0;
-		$len_offset = 0;
-		$len = 16;
-
-        // Visa
-        if ($type == 'Visa') {
-            $str[0] = 4;
-            $pos = 1;
-        }
-        // Mastercard
-        else if ($type == 'Mastercard') {
-            $str[0] = 5;
-            $t = floor((float)rand()/(float)getrandmax() * 5) % 5;
-            $str[1] = 1 + $t; // Between 1 and 5.
-            $pos = 2;
-        }
-        // American Express
-        else if ($type == 'AmericanExpress') {
-            $str[0] = 3;
-            $t = floor((float)rand()/(float)getrandmax() * 4) % 4;
-            $str[1] = 4 + $t; // Between 4 and 7.
-            $pos = 2;
-        }
-        // Discover
-        else if ($type == 'Discover') {
-            $str[0] = 6;
-            $str[1] = 0;
-            $str[2] = 1;
-            $str[3] = 1;
-            $pos = 4;
-        }
-        while ($pos < $len - 1) {
-            $str[$pos++] = floor((float)rand()/(float)getrandmax() * 10) % 10;
-        }
-
-        $len_offset = ($len + 1) % 2;
-        for ($pos = 0; $pos < $len - 1; $pos++) {
-            if (($pos + $len_offset) % 2) {
-                $t = $str[$pos] * 2;
-                if ($t > 9) {
-                    $t -= 9;
-                }
-                $sum += $t;
-            }
-            else {
-                $sum += $str[$pos];
-            }
-        }
-
-        $final_digit = (10 - ($sum % 10)) % 10;
-        $str[$len - 1] = $final_digit;
-
-        $t = join('', $str);
-        $t = $t.substr(0, $len);
-        return $t;
-    }
-
-    public static function Mobile($mobile)
-    {
-        $mobile = self::toEnNumber($mobile);
-		if (preg_match("/^09\d{9}$/", $mobile))
-		{
-			return $mobile;
-		}
-        if (preg_match("/^9\d{9}$/", $mobile))
-		{
-			return "0" . $mobile;
-		}
-
-        // safety
-        return $mobile;
-    }
-
-    public static function isMobile($mobile)
-    {
-        return preg_match("/^(0)?9\d{9}$/", self::FarsiNumbersToEnglish($mobile));
-    }
-
-    public static function FarsiNumbersToEnglish($string)
+    public static function FarsiNumbersToEnglish($string): array|string
     {
         $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
         $arabic = ['٩', '٨', '٧', '٦', '٥', '٤', '٣', '٢', '١', '٠'];
@@ -180,17 +49,14 @@ class FarsiHelper
         return $englishNumbersOnly;
     }
 
-    public static function toEnNumber($input)
+    public static function toEnNumber($input): array|string
     {
+        if (is_null($input)) return null;
+        if (preg_match("/^\d+$/", $input)) return $input;
         return self::FarsiNumbersToEnglish($input);
-        // $replace_pairs = array(
-        //     '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
-        //     '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9'
-        // );
-        // return strtr($input, $replace_pairs);
     }
 
-    public static function RemoveArabian($string)
+    public static function RemoveArabian($string): array|string
     {
         $characters = [
             'ك' => 'ک',
@@ -216,23 +82,85 @@ class FarsiHelper
         return str_replace(array_keys($characters), array_values($characters), $string);
     }
 
-    public static function jdateFromString($string)
+    public static function convertKa($str): array|string|null
     {
-        $months = [
-            "January" => "ژانویه",
-            "February" => "فوریه",
-            "March" => "مارچ",
-            "April" => "آوریل",
-            "May" => "می",
-            "June" => "جون",
-            "July" => "جولای",
-            "August" => "آگوست",
-            "September" => "سپتامبر",
-            "October" => "اوکتبر",
-            "November" => "نوامبر",
-            "December" => "دسامبر"
-        ];
-        $string = str_replace($months, array_keys($months), $string);
-        return jdate($string);
+        $re = '/ك/';
+        return preg_replace($re, 'ک', $str);
+    }
+
+    public static function convertYa($str): array|string|null
+    {
+        $re = '/ي/';
+        return preg_replace($re, 'ی', $str);
+    }
+
+    public static function convertArabicNum($str): array|string|null
+    {
+        $regexDecimal = '/([۰۱۲۳۴۵۶۷۸۹]+)([\.\/])([۰۱۲۳۴۵۶۷۸۹]+)/';
+        $regexFix = '/([۰۱۲۳۴۵۶۷۸۹]+)٫([۰۱۲۳۴۵۶۷۸۹]+)\/([۰۱۲۳۴۵۶۷۸۹]+)/';
+
+        $str = preg_replace([
+            '/٠/', '/١/', '/٢/', '/٣/', '/٤/', '/٥/', '/٦/', '/٧/', '/٨/', '/٩/'
+        ], [
+            '۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'
+        ], $str);
+
+        $str = preg_replace($regexDecimal, '$1٫$3', $str);
+        $str = preg_replace($regexFix, '$1/$2/$3', $str);
+
+        return $str;
+    }
+
+    public static function convertEnglishNum($str): array|string|null
+    {
+        $regexDecimal = '/([۰۱۲۳۴۵۶۷۸۹]+)([\.\/])([۰۱۲۳۴۵۶۷۸۹]+)/';
+        $regexFix = '/([۰۱۲۳۴۵۶۷۸۹]+)٫([۰۱۲۳۴۵۶۷۸۹]+)\/([۰۱۲۳۴۵۶۷۸۹]+)/';
+
+        $str = preg_replace([
+            '/0/', '/1/', '/2/', '/3/', '/4/', '/5/', '/6/', '/7/', '/8/', '/9/'
+        ], [
+            '۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'
+        ], $str);
+        $str = preg_replace($regexDecimal, '$1٫$3', $str);
+        $str = preg_replace($regexFix, '$1/$2/$3', $str);
+
+        return $str;
+    }
+
+    public static function convertDecimalSeparator($str): array|string|null
+    {
+        $regexDecimal = '/([۰۱۲۳۴۵۶۷۸۹]+)([\.\/])([۰۱۲۳۴۵۶۷۸۹]+)/';
+        $regexFix = '/([۰۱۲۳۴۵۶۷۸۹]+)٫([۰۱۲۳۴۵۶۷۸۹]+)\/([۰۱۲۳۴۵۶۷۸۹]+)/';
+
+        $str = preg_replace($regexDecimal, '$1٫$3', $str);
+        $str = preg_replace($regexFix, '$1/$2/$3', $str);
+
+        return $str;
+    }
+
+    public static function convertParenthesisSpace($str): array|string|null
+    {
+        $regexParenthesis1 = '/([\wا-ی]+)(\s{0}|\s{2,})([\(\[\{])/';
+        $regexParenthesis2 = '/([\(\[\{])\s+/';
+        $regexParenthesis3 = '/\s+([\)\]\}])/';
+        $regexParenthesis4 = '/([\)\]\}])(\s{0}|\s{2,})([\wا-ی]+)/';
+
+        $str = preg_replace($regexParenthesis1, '$1 $3', $str);
+        $str = preg_replace($regexParenthesis2, '$1', $str);
+        $str = preg_replace($regexParenthesis3, '$1', $str);
+        $str = preg_replace($regexParenthesis4, '$1 $3', $str);
+
+        return $str;
+    }
+
+    public static function convertPunctuationSpace($str): array|string|null
+    {
+        $regexPunctuation1 = '/([\wا-ی]+)\s+([\.\؟\!\?])/';
+        $regexPunctuation2 = '/([\.\؟\!\?])(\s{0}|\s{2,})([\wا-ی]+)/';
+
+        $str = preg_replace($regexPunctuation1, '$1$2', $str);
+        $str = preg_replace($regexPunctuation2, '$1 $3', $str);
+
+        return $str;
     }
 }
